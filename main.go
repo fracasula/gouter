@@ -1,35 +1,44 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
+	"regexp"
 )
 
-type controller struct{}
-
-func (c controller) home(w http.ResponseWriter, req *http.Request) {
-	switch req.URL.Path {
-	case "/":
-		fmt.Fprintf(w, "This is the homepage!")
-	default:
-		log.Printf("404 Not Found: %v", req.URL.Path)
-		http.Error(w, "Not Found", 404)
-	}
+// Router gives you a way to map routes to handlers
+type Router struct {
+	routes          map[string]func(w http.ResponseWriter, req *http.Request)
+	notFoundHandler func(w http.ResponseWriter, req *http.Request)
 }
 
-func (c controller) help(w http.ResponseWriter, req *http.Request) {
-	fmt.Fprintf(w, "This is the help page!")
+func (c Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	for route, handler := range c.routes {
+		match, _ := regexp.MatchString(route, req.URL.Path)
+
+		if match {
+			go handler(w, req)
+			return
+		}
+	}
+
+	c.notFoundHandler(w, req)
 }
 
 const httpServerAddr = ":8080"
 
 func main() {
-	c := controller{}
+	routes := make(map[string]func(w http.ResponseWriter, req *http.Request))
+	notFound := func(w http.ResponseWriter, req *http.Request) {
+		log.Printf("404 Not Found for path %v", req.URL.Path)
+	}
 
-	http.HandleFunc("/", c.home)
-	http.HandleFunc("/help", c.help)
+	routes["^/help$"] = func(w http.ResponseWriter, req *http.Request) {
+		log.Println("Gotcha! You are in the help page =)")
+	}
+
+	r := Router{routes, notFound}
 
 	log.Printf("Listening on port %v...", httpServerAddr)
-	http.ListenAndServe(httpServerAddr, nil)
+	http.ListenAndServe(httpServerAddr, r)
 }
