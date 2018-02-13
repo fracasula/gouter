@@ -48,11 +48,11 @@ func main() {
 	}
 
 	routes["^/product/(?P<pid>[0-9]+)$"] = func(w http.ResponseWriter, req *http.Request, vars map[string]string) {
-		log.Printf("Product is %v", vars)
+		log.Printf("Product ID is %v", vars["pid"])
 	}
 
 	routes["^/category/(?P<cid>[0-9]+)$"] = func(w http.ResponseWriter, req *http.Request, vars map[string]string) {
-		log.Printf("Category is %v", vars)
+		log.Printf("Category ID is %v", vars["cid"])
 	}
 
 	r := Router{routes, notFound}
