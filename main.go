@@ -8,7 +8,7 @@ import (
 
 // Router gives you a way to map routes to handlers
 type Router struct {
-	routes          map[string]func(w http.ResponseWriter, req *http.Request, vars []string)
+	routes          map[string]func(w http.ResponseWriter, req *http.Request, vars map[string]string)
 	notFoundHandler func(w http.ResponseWriter, req *http.Request)
 }
 
@@ -18,7 +18,15 @@ func (c Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		matches := re.FindStringSubmatch(req.URL.Path)
 
 		if len(matches) > 0 {
-			go handler(w, req, matches[1:])
+			vars := make(map[string]string)
+
+			for i, name := range re.SubexpNames() {
+				if name != "" {
+					vars[name] = matches[i]
+				}
+			}
+
+			go handler(w, req, vars)
 			return
 		}
 	}
@@ -33,17 +41,17 @@ func main() {
 		log.Printf("404 Not Found for path %v", req.URL.Path)
 	}
 
-	routes := make(map[string]func(w http.ResponseWriter, req *http.Request, vars []string))
+	routes := make(map[string]func(w http.ResponseWriter, req *http.Request, vars map[string]string))
 
-	routes["^/help$"] = func(w http.ResponseWriter, req *http.Request, vars []string) {
+	routes["^/help$"] = func(w http.ResponseWriter, req *http.Request, vars map[string]string) {
 		log.Println("Gotcha! You are in the help page =)")
 	}
 
-	routes["^/product/(?P<pid>[0-9]+)$"] = func(w http.ResponseWriter, req *http.Request, vars []string) {
+	routes["^/product/(?P<pid>[0-9]+)$"] = func(w http.ResponseWriter, req *http.Request, vars map[string]string) {
 		log.Printf("Product is %v", vars)
 	}
 
-	routes["^/category/([0-9]+)$"] = func(w http.ResponseWriter, req *http.Request, vars []string) {
+	routes["^/category/(?P<cid>[0-9]+)$"] = func(w http.ResponseWriter, req *http.Request, vars map[string]string) {
 		log.Printf("Category is %v", vars)
 	}
 
