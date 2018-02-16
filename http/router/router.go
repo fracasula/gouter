@@ -2,7 +2,6 @@ package router
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"regexp"
 )
@@ -46,7 +45,6 @@ func InitRoutes() map[string]HandlerFunc {
 func notFoundDefaultHandler(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusNotFound)
 	fmt.Fprint(w, "404 Not Found")
-	log.Printf("404 Not Found: %v", req.URL.Path)
 }
 
 func (r Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -62,10 +60,10 @@ func (r Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				}
 			}
 
-			go route.handler(w, req, vars)
+			route.handler(w, req, vars)
 			return
 		}
 	}
 
-	go r.NotFoundHandler(w, req)
+	r.NotFoundHandler(w, req)
 }
