@@ -24,7 +24,7 @@ const httpServerAddr = ":8080"
 func main() {
 	routes := router.InitRoutes()
 
-	routes["^/help$"] = func(w http.ResponseWriter, req *http.Request, vars map[string]string) {
+	routes["^/help$"] = func(w http.ResponseWriter, req *http.Request, _ map[string]string) {
 		fmt.Fprintf(w, "Gotcha! You are in the help page =)")
 	}
 
