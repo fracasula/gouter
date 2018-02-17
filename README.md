@@ -16,7 +16,7 @@ import (
 	"log"
 	"net/http"
 
-	"./router"
+	"github.com/fracasula/gouter/router"
 )
 
 const httpServerAddr = ":8080"
@@ -42,8 +42,12 @@ func main() {
 	http.ListenAndServe(httpServerAddr, r)
 }
 ```
+## How to go get it
+
+In your terminal: `go get -u github.com/fracasula/gouter`
+In your go files: `import "github.com/fracasula/gouter/router"`
 
 ## Try it out
 
-Just pull the project, change the `main.go` file and run `make`.
+Just pull the project, change the `main.go` file as you wish and run `make`.
 It will build a Docker container and expose an HTTP server on the 8080 for you to test.
