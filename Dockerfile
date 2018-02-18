@@ -6,7 +6,7 @@ COPY router router
 COPY main.go .
 
 RUN go build main.go
-RUN chmod +x main.go
+RUN chmod +x main
 RUN rm -f main.go
 RUN rm -Rf router
 
