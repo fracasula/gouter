@@ -3,8 +3,6 @@
 ![Travis CI build](https://travis-ci.org/fracasula/gouter.svg?branch=master)
 
 A super simple router for [Go](https://golang.org/) applications.
-It's still a work in progress, you can can check [here](https://github.com/fracasula/gouter/issues/2)
-what needs to be done (feel free to post suggestions too).
 
 It uses regular expressions for route matching to give maximum flexibility:
 
@@ -36,7 +34,7 @@ func main() {
 		fmt.Fprintf(w, "Category ID is %v", vars["cid"])
 	}
 
-	r := router.NewRouter(&routes)
+	r := router.New(&routes)
 
 	log.Printf("Listening on port %v...", httpServerAddr)
 	http.ListenAndServe(httpServerAddr, r)

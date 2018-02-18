@@ -25,7 +25,7 @@ func main() {
 		fmt.Fprintf(w, "Category ID is %v", vars["cid"])
 	}
 
-	r := router.NewRouter(&routes)
+	r := router.New(&routes)
 
 	log.Printf("Listening on port %v...", httpServerAddr)
 	http.ListenAndServe(httpServerAddr, r)

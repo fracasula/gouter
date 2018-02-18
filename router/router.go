@@ -22,7 +22,7 @@ type Route struct {
 }
 
 // NewRouter constructor
-func NewRouter(routes *map[string]HandlerFunc) *Router {
+func New(routes *map[string]HandlerFunc) *Router {
 	compiledRoutes := make([]Route, len(*routes))
 
 	i := 0

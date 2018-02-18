@@ -28,7 +28,7 @@ func TestNewRouter(t *testing.T) {
 	routes["^/help$"] = emptyHandler
 	routes["^/contact$"] = emptyHandler
 
-	router := NewRouter(&routes)
+	router := New(&routes)
 
 	if l := len(router.Routes); l != 2 {
 		t.Errorf("Expected two routes in the router, got %d instead", l)
@@ -48,14 +48,14 @@ func TestNewRouter(t *testing.T) {
 func TestNewRouterPanic(t *testing.T) {
 	defer func() {
 		if r := recover(); r == nil {
-			t.Error("Expected NewRouter to panic with broken regular expressions")
+			t.Error("Expected New to panic with broken regular expressions")
 		}
 	}()
 
 	routes := InitRoutes()
 	routes["a broken regex???"] = func(w http.ResponseWriter, req *http.Request, vars map[string]string) {}
 
-	NewRouter(&routes)
+	New(&routes)
 }
 
 func TestRouting(t *testing.T) {
@@ -69,7 +69,7 @@ func TestRouting(t *testing.T) {
 		fmt.Fprintf(w, "Hello from another page!")
 	}
 
-	router := NewRouter(&routes)
+	router := New(&routes)
 
 	// Testing simple page
 	w := httptest.NewRecorder()
@@ -103,7 +103,7 @@ func TestRoutingWithParams(t *testing.T) {
 		fmt.Fprintf(w, "Product ID is %v", vars["pid"])
 	}
 
-	router := NewRouter(&routes)
+	router := New(&routes)
 
 	// Testing params
 	w := httptest.NewRecorder()
@@ -123,7 +123,7 @@ func TestRoutingNotFound(t *testing.T) {
 		fmt.Fprint(w, "Hello from a page!")
 	}
 
-	router := NewRouter(&routes)
+	router := New(&routes)
 
 	// Testing not found handler
 	w := httptest.NewRecorder()
