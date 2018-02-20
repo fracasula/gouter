@@ -39,8 +39,8 @@ func TestNewRouter(t *testing.T) {
 			t.Error("Unexpected route pattern, got '%s'", rp)
 		}
 
-		if htype := reflect.TypeOf(r.handler).String(); htype != "router.HandlerFunc" {
-			t.Error("Expected first route handler to be 'router.HandlerFunc', got '%s' instead", htype)
+		if htype := reflect.TypeOf(r.handler).String(); htype != "router.RouteHandlerFunc" {
+			t.Error("Expected first route handler to be 'router.RouteHandlerFunc', got '%s' instead", htype)
 		}
 	}
 }

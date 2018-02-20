@@ -10,19 +10,29 @@ import (
 type Router struct {
 	Routes          []Route
 	NotFoundHandler http.HandlerFunc
+	Middlewares     []*Middleware
 }
 
-// HandlerFunc interface
-type HandlerFunc func(http.ResponseWriter, *http.Request, map[string]string)
+// Middleware struct
+type Middleware struct {
+	Handler *MiddlewareHandlerFunc
+	Next    *Middleware
+}
+
+// MiddlewareHandlerFunc type
+type MiddlewareHandlerFunc func(http.ResponseWriter, *http.Request, *Middleware)
 
 // Route stuct
 type Route struct {
 	pattern *regexp.Regexp
-	handler HandlerFunc
+	handler RouteHandlerFunc
 }
 
+// RouteHandlerFunc type
+type RouteHandlerFunc func(http.ResponseWriter, *http.Request, map[string]string)
+
 // NewRouter constructor
-func New(routes *map[string]HandlerFunc) *Router {
+func New(routes *map[string]RouteHandlerFunc) *Router {
 	compiledRoutes := make([]Route, len(*routes))
 
 	i := 0
@@ -34,12 +44,12 @@ func New(routes *map[string]HandlerFunc) *Router {
 		i++
 	}
 
-	return &Router{compiledRoutes, notFoundDefaultHandler}
+	return &Router{compiledRoutes, notFoundDefaultHandler, nil}
 }
 
 // InitRoutes returns an empty map of routes
-func InitRoutes() map[string]HandlerFunc {
-	return make(map[string]HandlerFunc)
+func InitRoutes() map[string]RouteHandlerFunc {
+	return make(map[string]RouteHandlerFunc)
 }
 
 func notFoundDefaultHandler(w http.ResponseWriter, req *http.Request) {
@@ -47,7 +57,19 @@ func notFoundDefaultHandler(w http.ResponseWriter, req *http.Request) {
 	fmt.Fprint(w, "404 Not Found")
 }
 
+func (r *Router) AddMiddleware(mw *MiddlewareHandlerFunc) {
+	r.Middlewares = append(r.Middlewares, mw)
+
+	if l := len(r.Middlewares); l > 1 {
+		r.Middlewares[l-2].Next = r.Middlewares[l-1]
+	}
+}
+
 func (r Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	if len(r.Middlewares) > 1 {
+		r.Middlewares[0].Handler()
+	}
+
 	for _, route := range r.Routes {
 		matches := route.pattern.FindStringSubmatch(req.URL.Path)
 
