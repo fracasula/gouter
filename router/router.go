@@ -10,17 +10,11 @@ import (
 type Router struct {
 	Routes          []Route
 	NotFoundHandler http.HandlerFunc
-	Middlewares     []*Middleware
+	Middlewares     []Middleware
 }
 
-// Middleware struct
-type Middleware struct {
-	Handler *MiddlewareHandlerFunc
-	Next    *Middleware
-}
-
-// MiddlewareHandlerFunc type
-type MiddlewareHandlerFunc func(http.ResponseWriter, *http.Request, *Middleware)
+// Middleware type
+type Middleware func(http.HandlerFunc) http.HandlerFunc
 
 // Route stuct
 type Route struct {
@@ -31,7 +25,7 @@ type Route struct {
 // RouteHandlerFunc type
 type RouteHandlerFunc func(http.ResponseWriter, *http.Request, map[string]string)
 
-// NewRouter constructor
+// New constructor
 func New(routes *map[string]RouteHandlerFunc) *Router {
 	compiledRoutes := make([]Route, len(*routes))
 
@@ -52,40 +46,45 @@ func InitRoutes() map[string]RouteHandlerFunc {
 	return make(map[string]RouteHandlerFunc)
 }
 
+// AddMiddleware function
+func (r *Router) AddMiddleware(mw Middleware) {
+	r.Middlewares = append(r.Middlewares, mw)
+}
+
+func (r Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	handler := func(w http.ResponseWriter, req *http.Request) {
+		for _, route := range r.Routes {
+			matches := route.pattern.FindStringSubmatch(req.URL.Path)
+
+			if len(matches) > 0 {
+				vars := make(map[string]string)
+
+				for i, name := range route.pattern.SubexpNames() {
+					if name != "" { // only named groups are allowed
+						vars[name] = matches[i]
+					}
+				}
+
+				route.handler(w, req, vars)
+				return
+			}
+		}
+
+		r.NotFoundHandler(w, req)
+	}
+
+	buildMiddlewaresChain(handler, r.Middlewares...)(w, req)
+}
+
 func notFoundDefaultHandler(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusNotFound)
 	fmt.Fprint(w, "404 Not Found")
 }
 
-func (r *Router) AddMiddleware(mw *MiddlewareHandlerFunc) {
-	r.Middlewares = append(r.Middlewares, mw)
-
-	if l := len(r.Middlewares); l > 1 {
-		r.Middlewares[l-2].Next = r.Middlewares[l-1]
-	}
-}
-
-func (r Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	if len(r.Middlewares) > 1 {
-		r.Middlewares[0].Handler()
+func buildMiddlewaresChain(f http.HandlerFunc, mws ...Middleware) http.HandlerFunc {
+	if len(mws) == 0 {
+		return f
 	}
 
-	for _, route := range r.Routes {
-		matches := route.pattern.FindStringSubmatch(req.URL.Path)
-
-		if len(matches) > 0 {
-			vars := make(map[string]string)
-
-			for i, name := range route.pattern.SubexpNames() {
-				if name != "" { // only named groups are allowed
-					vars[name] = matches[i]
-				}
-			}
-
-			route.handler(w, req, vars)
-			return
-		}
-	}
-
-	r.NotFoundHandler(w, req)
+	return mws[0](buildMiddlewaresChain(f, mws[1:cap(mws)]...))
 }

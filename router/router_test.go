@@ -118,7 +118,6 @@ func TestRoutingWithParams(t *testing.T) {
 
 func TestRoutingNotFound(t *testing.T) {
 	routes := InitRoutes()
-
 	routes["^/page$"] = func(w http.ResponseWriter, req *http.Request, _ map[string]string) {
 		fmt.Fprint(w, "Hello from a page!")
 	}
@@ -132,6 +131,47 @@ func TestRoutingNotFound(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusNotFound || w.Body.String() != "404 Not Found" {
-		t.Errorf("Routing to help page failed, got %d: %v", w.Code, w.Body)
+		t.Errorf("Routing to not found handler failed, got %d: %v", w.Code, w.Body)
+	}
+}
+
+func TestMiddlewares(t *testing.T) {
+	routes := InitRoutes()
+	routes["^/page$"] = func(w http.ResponseWriter, req *http.Request, _ map[string]string) {
+		fmt.Fprint(w, "Hello from a page!")
+	}
+
+	router := New(&routes)
+
+	router.AddMiddleware(func(f http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, req *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			f(w, req)
+		}
+	})
+
+	router.AddMiddleware(func(f http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, req *http.Request) {
+			w.Header().Set("X-Custom-ID", "112233")
+			f(w, req)
+		}
+	})
+
+	// Testing not found handler
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/page", strings.NewReader(""))
+
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK || w.Body.String() != "Hello from a page!" {
+		t.Errorf("Routing to page failed, got %d: %v", w.Code, w.Body)
+	}
+
+	if h := w.Header().Get("X-Custom-ID"); h != "112233" {
+		t.Errorf("Custom middleware failed for 'X-Custom-ID' header, got %v", h)
+	}
+
+	if h := w.Header().Get("Content-Type"); h != "application/json" {
+		t.Errorf("Custom middleware failed for 'Content-Type' header, got %v", h)
 	}
 }
