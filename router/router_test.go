@@ -36,11 +36,11 @@ func TestNewRouter(t *testing.T) {
 
 	for _, r := range router.Routes {
 		if rp := r.pattern.String(); rp != "^/help$" && rp != "^/contact$" {
-			t.Error("Unexpected route pattern, got '%s'", rp)
+			t.Errorf("Unexpected route pattern, got '%s'", rp)
 		}
 
 		if htype := reflect.TypeOf(r.handler).String(); htype != "router.RouteHandlerFunc" {
-			t.Error("Expected first route handler to be 'router.RouteHandlerFunc', got '%s' instead", htype)
+			t.Errorf("Expected first route handler to be 'router.RouteHandlerFunc', got '%s' instead", htype)
 		}
 	}
 }
