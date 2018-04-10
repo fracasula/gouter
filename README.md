@@ -36,7 +36,7 @@ func main() {
 
 	r := router.New(&routes)
 
-	router.AddMiddleware(func(f http.HandlerFunc) http.HandlerFunc {
+	r.AddMiddleware(func(f http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, req *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 			f(w, req)
